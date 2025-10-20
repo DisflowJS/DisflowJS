@@ -97,7 +97,7 @@ my-bot/
 ├── vals/
 │   └── values.js         # Global constants
 ├── utils/
-│   ├── button-templates.js
+│   ├── button-template.js
 │   ├── random.js
 │   └── time.js
 ├── .env                  # Bot token
@@ -160,19 +160,58 @@ onButton('no', async function() {
 
 ## 🎨 Button Templates
 
+Create reusable, styled buttons with automatic event handling:
+
 ```javascript
-// utils/buttonTemplates.js
+// Define button templates
 flow.button.template('confirm')
   .title('Confirm')
   .emoji('✅')
   .color('Success')
   .clickEvent(async function() {
-    await this.update({ content: 'Confirmed!', components: [] });
+    await this.update({ content: '✅ Confirmed!', components: [] });
   });
 
-// Usage
-components: [row(flow.button.build('confirm'))]
+flow.button.template('cancel')
+  .title('Cancel')
+  .emoji('❌')
+  .color('Danger')
+  .clickEvent(async function() {
+    await this.update({ content: '❌ Cancelled', components: [] });
+  });
+
+flow.button.template('info')
+  .title('More Info')
+  .emoji('ℹ️')
+  .color('Primary')
+  .clickEvent(async function() {
+    await this.reply({ content: 'Here is more information...', ephemeral: true });
+  });
+
+// Use in any command
+command.new('action', 'Choose an action', async function() {
+  await reply({
+    content: 'What would you like to do?',
+    components: [
+      row(
+        flow.button.build('confirm'),
+        flow.button.build('cancel'),
+        flow.button.build('info')
+      )
+    ]
+  });
+});
 ```
+
+**Available colors:** `Primary`, `Secondary`, `Success`, `Danger`, `Link`
+
+**Template methods:**
+- `.title(text)` - Button label
+- `.emoji(emoji)` - Button emoji
+- `.color(style)` - Button style/color
+- `.disabled(true)` - Disable button
+- `.clickEvent(handler)` - Click handler with context (`this`)
+- `.build()` - Build the button component
 
 ## 📡 Events
 
