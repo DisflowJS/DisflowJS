@@ -1,14 +1,23 @@
-# Don't publish these to npm
+node_modules/
+test/
+site/
+example/
+examples/
 commands/
 emoji/
 vals/
-example/
-token.txt
-token.txt.example
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
 .git
 .gitignore
-*.log
-.DS_Store
-
-# Only publish the framework source
-# Users will create their own commands/emoji/vals
+.gitattributes
+token.txt
+token.txt.example
+.vscode/
+.idea/
+.env
+.env.local
+.env.*.local
