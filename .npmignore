@@ -1,0 +1,14 @@
+# Don't publish these to npm
+commands/
+emoji/
+vals/
+example/
+token.txt
+token.txt.example
+.git
+.gitignore
+*.log
+.DS_Store
+
+# Only publish the framework source
+# Users will create their own commands/emoji/vals

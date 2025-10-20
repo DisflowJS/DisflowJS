@@ -1,0 +1,30 @@
+{
+  "name": "disflow",
+  "version": "0.1.0",
+  "description": "Easiest Discord bot framework ☕",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "framework",
+    "minimal",
+    "discord.js"
+  ],
+  "author": "Disflow Contributors",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1"
+  },
+  "exports": {
+    ".": "./src/index.js"
+  }
+}
