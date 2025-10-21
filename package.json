@@ -1,6 +1,6 @@
 {
   "name": "disflow",
-  "version": "0.1.1-Beta",
+  "version": "0.1.2",
   "description": "Easiest Discord bot framework ☕",
   "main": "src/index.js",
   "type": "module",
