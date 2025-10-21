@@ -98,8 +98,9 @@ my-bot/
 │   └── values.js         # Global constants
 ├── utils/
 │   ├── button-template.js
-│   ├── random.js
-│   └── time.js
+│   ├── metrics.js          # Server stats
+│   ├── random.js         # Random utilities
+│   └── time.js           # Time utilities
 ├── .env                  # Bot token
 └── package.json
 ```
@@ -213,6 +214,115 @@ command.new('action', 'Choose an action', async function() {
 - `.clickEvent(handler)` - Click handler with context (`this`)
 - `.build()` - Build the button component
 
+## 📊 Server Stats & Metrics (NEW)
+
+Get server statistics instantly with the global `stats` object:
+
+```javascript
+command.new('serverstats', 'Show server statistics', async function() {
+  await reply({
+    embeds: [embed({
+      title: `📊 ${stats.guild.name} Statistics`,
+      fields: [
+        { name: '👥 Members', value: `${stats.members.all} (${stats.members.online} online)`, inline: true },
+        { name: '🤖 Bots', value: `${stats.members.bots}`, inline: true },
+        { name: '🆕 New (24h)', value: `${stats.members.new24h}`, inline: true },
+        { name: '📢 Channels', value: `${stats.channels.all} total`, inline: true },
+        { name: '🎭 Roles', value: `${stats.roles.all}`, inline: true },
+        { name: '😀 Emojis', value: `${stats.emojis.all}/${stats.emojis.maxSlots}`, inline: true },
+        { name: '💎 Boosts', value: `Level ${stats.boost.level} (${stats.boost.count} boosts)`, inline: true },
+        { name: '🔊 In Voice', value: `${stats.voice.active}`, inline: true },
+        { name: '🎂 Server Age', value: `${stats.guild.age} days`, inline: true },
+      ],
+      color: 0x5865F2,
+      timestamp: true
+    })]
+  });
+});
+```
+
+**Available Stats:**
+
+**Members:**
+- `stats.members.all` - Total members
+- `stats.members.online` - Online members
+- `stats.members.offline` - Offline members
+- `stats.members.bots` - Bot count
+- `stats.members.humans` - Human count
+- `stats.members.new24h` - Joined in last 24h
+- `stats.members.new7d` - Joined in last 7 days
+- `stats.members.withRoles` - Members with roles
+- `stats.members.withoutRoles` - Members without roles
+
+**Guild:**
+- `stats.guild.name` - Server name
+- `stats.guild.id` - Server ID
+- `stats.guild.description` - Server description
+- `stats.guild.ownerId` - Owner ID
+- `stats.guild.owner` - Owner member object
+- `stats.guild.age` - Server age in days
+- `stats.guild.createdAt` - Creation date
+- `stats.guild.boostLevel` - Boost level (0-3)
+- `stats.guild.boostCount` - Boost count
+- `stats.guild.verified` - Is verified
+- `stats.guild.partnered` - Is partnered
+- `stats.guild.icon` - Server icon URL
+- `stats.guild.banner` - Server banner URL
+
+**Channels:**
+- `stats.channels.all` - Total channels
+- `stats.channels.text` - Text channels
+- `stats.channels.voice` - Voice channels
+- `stats.channels.categories` - Categories
+- `stats.channels.stage` - Stage channels
+- `stats.channels.forum` - Forum channels
+- `stats.channels.threads` - Thread channels
+
+**Roles:**
+- `stats.roles.all` - Total roles
+- `stats.roles.admin` - Admin roles
+- `stats.roles.mentionable` - Mentionable roles
+- `stats.roles.hoisted` - Hoisted roles
+- `stats.roles.managed` - Bot/managed roles
+- `stats.roles.highest` - Highest role
+- `stats.roles.lowest` - @everyone role
+
+**Emojis:**
+- `stats.emojis.all` - Total emojis
+- `stats.emojis.static` - Static emojis
+- `stats.emojis.animated` - Animated emojis
+- `stats.emojis.maxSlots` - Max emoji slots
+- `stats.emojis.remaining` - Remaining slots
+
+**Stickers:**
+- `stats.stickers.all` - Total stickers
+- `stats.stickers.maxSlots` - Max sticker slots
+- `stats.stickers.remaining` - Remaining slots
+
+**Voice:**
+- `stats.voice.active` - Members in voice
+- `stats.voice.muted` - Muted members
+- `stats.voice.deafened` - Deafened members
+- `stats.voice.streaming` - Streaming members
+- `stats.voice.video` - Video enabled members
+
+**Boosts:**
+- `stats.boost.level` - Boost level (0-3)
+- `stats.boost.count` - Total boosts
+- `stats.boost.boosters` - Booster count
+- `stats.boost.neededForNext` - Boosts needed for next level
+- `stats.boost.progress` - Progress to next level (0-100)
+
+**Moderation:**
+- `await stats.moderation.bans()` - Ban count (async)
+- `stats.moderation.timedOut` - Timed out members
+
+**Full Report:**
+```javascript
+const report = await stats.getFullReport();
+console.log(report); // Complete server statistics object
+```
+
 ## 📡 Events
 
 `createBot` exposes global helpers like `on`, `once`, and `log` once your bot is running. Register listeners anywhere in your app after boot:
@@ -277,10 +387,11 @@ npm install disflow discord.js
 
 ## 📚 Documentation
 
-Full documentation: [disflow.dev](https://disflow.dev)
+Full documentation: [disflow.fun](https://disflow.fun)
 
 ## 📄 License
 
 MIT
 
+**Support Mail** help@disflow.fun
 **Made with love** 🌊 **Disflow**

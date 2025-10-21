@@ -3,6 +3,7 @@
  */
 
 import buttonTemplates from '../utils/button-templates.js';
+import ServerMetrics from '../utils/metrics.js';
 
 // Global state
 let currentBot = null;
@@ -460,4 +461,34 @@ global.flow = {
       return buttonTemplates.build(id);
     }
   }
+};
+
+/**
+ * ========== SERVER STATS ==========
+ */
+
+/**
+ * Global stats object - automatically uses current guild context
+ */
+Object.defineProperty(global, 'stats', {
+  get: () => {
+    const guild = currentContext?.guild;
+    if (!guild) {
+      console.warn('⚠️ stats requires guild context. Use inside commands or pass guild manually.');
+      return null;
+    }
+    return new ServerMetrics(guild);
+  }
+});
+
+/**
+ * Create stats for specific guild
+ */
+global.getStats = function(guild) {
+  const targetGuild = guild || currentContext?.guild;
+  if (!targetGuild) {
+    console.error('❌ No guild provided!');
+    return null;
+  }
+  return new ServerMetrics(targetGuild);
 };
