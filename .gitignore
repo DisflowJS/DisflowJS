@@ -3,4 +3,6 @@ node_modules/
 site/
 create-disflow/
 npm-debug.log
-test/
+test1/
+.env
+token.txt

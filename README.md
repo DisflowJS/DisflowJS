@@ -33,11 +33,13 @@ npm start
 - **Zero Config** — Just write a command and run
 - **Simple Usage** — Define commands with `bot.command.new()`
 - **Auto Deploy** — Slash commands automatically register
+- **Hot Reload** — Commands auto-reload on file changes
 - **Buttons** — Interactive buttons made easy
 - **Embeds** — Rich message support
 - **Events** — Full Discord event system
 - **Utils** — Random, time, emoji, and more
 - **Auto Logging** — Built-in logging system
+- **Server Stats** — Easy access to server metrics
 - **Flexible Loader** — Commands can live in nested folders and multiple module formats
 
 ## 📝 Command Syntax
@@ -354,6 +356,65 @@ await createBot({
   },
 });
 ```
+
+## 🔥 Hot Reload (currently beta)
+
+Commands automatically reload when you save files — no need to restart your bot!
+
+**Enabled by default.** Just edit your command files and watch them reload instantly:
+
+```javascript
+// commands/test.js
+bot.command.new('test', 'Test command', async function() {
+  await this.reply('Version 1');
+});
+
+// Edit and save -> Auto reloads!
+// Change to: await this.reply('Version 2');
+// Command updates instantly without restart
+```
+
+**Console output:**
+```
+🔥 Hot reload enabled - watching for changes...
+👁️ Watching: commands/
+🔄 File changed: test.js
+✅ Reloaded: test.js
+📡 Commands re-registered with Discord
+```
+
+**Control via .env file:**
+
+```env
+DISCORD_TOKEN=your_token_here
+HOT_RELOAD=true
+```
+
+**Accepted values:**
+- `true`, `1`, `yes` → Enable hot reload
+- `false`, `0`, `no` → Disable hot reload
+
+**Or disable via code:**
+
+```javascript
+await createBot({
+  hotReload: false
+});
+```
+
+**Priority:**
+1. Code option (`options.hotReload`)
+2. `.env` file (`HOT_RELOAD`)
+3. Default (`true`)
+
+**Features:**
+- ✅ Auto-reload on file save
+- ✅ Watches nested command folders
+- ✅ Auto re-registers with Discord
+- ✅ Debounced (prevents multiple reloads)
+- ✅ Handles file deletions
+- ✅ No bot restart needed
+- ✅ Configurable via .env
 
 ## 🎯 Why Disflow?
 

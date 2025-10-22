@@ -12,6 +12,7 @@ import time from '../utils/time.js';
 import SlashHandler from './slash-handler.js';
 import CommandBuilder from './command-builder.js';
 import AutoLogger from './auto-logger.js';
+import HotReload from './hot-reload.js';
 
 class DisflowClient {
   constructor() {
@@ -27,6 +28,10 @@ class DisflowClient {
 
     this.token = null;
     this.ready = false;
+    this.baseDir = null;
+    this.applicationId = null;
+    this.autoRegister = false;
+    this.hotReloadEnabled = true; // Default enabled
 
     // Slash command handler
     this.slashHandler = new SlashHandler(this.client);
@@ -36,6 +41,12 @@ class DisflowClient {
 
     // Auto logger
     this.autoLogger = new AutoLogger(this.client);
+
+    // Hot reload system
+    this.hotReload = null;
+
+    // Commands map reference
+    this.commands = this.slashHandler.commands;
 
     // Initialize event handlers
     this.setupEventHandlers();
@@ -292,6 +303,25 @@ class DisflowClient {
   }
 
   /**
+   * Parse HOT_RELOAD setting from .env
+   */
+  parseHotReload(content) {
+    const lines = content.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      
+      const match = trimmed.match(/^HOT_RELOAD\s*=\s*(.+)$/);
+      if (match) {
+        const value = match[1].replace(/^["']|["']$/g, '').trim().toLowerCase();
+        return value === 'true' || value === '1' || value === 'yes';
+      }
+    }
+    return null; // Not found, use default
+  }
+
+  /**
    * Auto-load token from .env or token.txt file
    * Priority: .env > token.txt
    */
@@ -301,6 +331,12 @@ class DisflowClient {
     try {
       const envContent = await readFile(envPath, 'utf-8');
       this.token = this.parseEnv(envContent);
+      
+      // Parse HOT_RELOAD setting
+      const hotReloadSetting = this.parseHotReload(envContent);
+      if (hotReloadSetting !== null) {
+        this.hotReloadEnabled = hotReloadSetting;
+      }
       
       if (this.token) {
         logger.success('Token loaded from .env');
@@ -339,6 +375,7 @@ class DisflowClient {
   async start(baseDir, options = {}) {
     logger.banner();
 
+    this.baseDir = baseDir;
     this.autoLogger.configure(options.logging || {});
 
     // Set base directory for loader
@@ -360,15 +397,47 @@ class DisflowClient {
     logger.info('🚀 Connecting to Discord...');
     try {
       await this.client.login(this.token);
+      this.applicationId = this.client.user?.id;
+      this.autoRegister = true;
     } catch (error) {
       logger.error('Failed to login to Discord', error);
       logger.error('Make sure your token is valid and the bot has proper permissions');
       process.exit(1);
     }
+
+    // Start hot reload if enabled
+    // Priority: options.hotReload > .env HOT_RELOAD > default (true)
+    const shouldEnableHotReload = options.hotReload !== undefined 
+      ? options.hotReload 
+      : this.hotReloadEnabled;
+
+    if (shouldEnableHotReload) {
+      this.hotReload = new HotReload(this, baseDir);
+      // Wait for client to be ready before starting hot reload
+      this.client.once(Events.ClientReady, () => {
+        setTimeout(() => {
+          this.hotReload.start();
+        }, 1000);
+      });
+    } else {
+      logger.info('🔥 Hot reload disabled');
+    }
+  }
+
+  async registerCommands() {
+    if (this.ready && this.applicationId) {
+      await this.slashHandler.deploy(this.token, this.applicationId);
+    }
   }
 
   async stop() {
     logger.info('Shutting down...');
+    
+    // Stop hot reload
+    if (this.hotReload) {
+      this.hotReload.stop();
+    }
+    
     await this.client.destroy();
     logger.success('Bot stopped');
   }
