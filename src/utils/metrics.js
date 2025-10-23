@@ -4,24 +4,24 @@
 
 class ServerMetrics {
   constructor(guild) {
-    this.guild = guild;
+    this._guild = guild;
   }
 
   /**
    * Member Statistics
    */
   get members() {
-    if (!this.guild) return null;
+    if (!this._guild) return null;
 
     return {
       // Total member count
       get all() {
-        return this.guild?.memberCount || 0;
+        return this._guild?.memberCount || 0;
       },
 
       // Online members
       get online() {
-        return this.guild?.members.cache.filter(m => 
+        return this._guild?.members.cache.filter(m => 
           m.presence?.status === 'online' || 
           m.presence?.status === 'idle' || 
           m.presence?.status === 'dnd'
@@ -30,35 +30,35 @@ class ServerMetrics {
 
       // Offline members
       get offline() {
-        return this.guild?.members.cache.filter(m => 
+        return this._guild?.members.cache.filter(m => 
           !m.presence || m.presence.status === 'offline'
         ).size || 0;
       },
 
       // Bot count
       get bots() {
-        return this.guild?.members.cache.filter(m => m.user.bot).size || 0;
+        return this._guild?.members.cache.filter(m => m.user.bot).size || 0;
       },
 
       // Human count
       get humans() {
-        return this.guild?.members.cache.filter(m => !m.user.bot).size || 0;
+        return this._guild?.members.cache.filter(m => !m.user.bot).size || 0;
       },
 
       // Members with roles
       get withRoles() {
-        return this.guild?.members.cache.filter(m => m.roles.cache.size > 1).size || 0;
+        return this._guild?.members.cache.filter(m => m.roles.cache.size > 1).size || 0;
       },
 
       // Members without roles (only @everyone)
       get withoutRoles() {
-        return this.guild?.members.cache.filter(m => m.roles.cache.size === 1).size || 0;
+        return this._guild?.members.cache.filter(m => m.roles.cache.size === 1).size || 0;
       },
 
       // New members (joined in last 24h)
       get new24h() {
         const yesterday = Date.now() - 24 * 60 * 60 * 1000;
-        return this.guild?.members.cache.filter(m => 
+        return this._guild?.members.cache.filter(m => 
           m.joinedTimestamp && m.joinedTimestamp > yesterday
         ).size || 0;
       },
@@ -66,12 +66,12 @@ class ServerMetrics {
       // New members (joined in last 7 days)
       get new7d() {
         const lastWeek = Date.now() - 7 * 24 * 60 * 60 * 1000;
-        return this.guild?.members.cache.filter(m => 
+        return this._guild?.members.cache.filter(m => 
           m.joinedTimestamp && m.joinedTimestamp > lastWeek
         ).size || 0;
       },
 
-      guild: this.guild
+      _guild: this._guild
     };
   }
 
@@ -197,52 +197,52 @@ class ServerMetrics {
    * Channel Statistics
    */
   get channels() {
-    if (!this.guild) return null;
+    if (!this._guild) return null;
 
     return {
       // Total channels
       get all() {
-        return this.guild?.channels.cache.size || 0;
+        return this._guild?.channels.cache.size || 0;
       },
 
       // Text channels
       get text() {
-        return this.guild?.channels.cache.filter(c => c.type === 0).size || 0;
+        return this._guild?.channels.cache.filter(c => c.type === 0).size || 0;
       },
 
       // Voice channels
       get voice() {
-        return this.guild?.channels.cache.filter(c => c.type === 2).size || 0;
+        return this._guild?.channels.cache.filter(c => c.type === 2).size || 0;
       },
 
       // Categories
       get categories() {
-        return this.guild?.channels.cache.filter(c => c.type === 4).size || 0;
+        return this._guild?.channels.cache.filter(c => c.type === 4).size || 0;
       },
 
       // Stage channels
       get stage() {
-        return this.guild?.channels.cache.filter(c => c.type === 13).size || 0;
+        return this._guild?.channels.cache.filter(c => c.type === 13).size || 0;
       },
 
       // Forum channels
       get forum() {
-        return this.guild?.channels.cache.filter(c => c.type === 15).size || 0;
+        return this._guild?.channels.cache.filter(c => c.type === 15).size || 0;
       },
 
       // Announcement channels
       get announcement() {
-        return this.guild?.channels.cache.filter(c => c.type === 5).size || 0;
+        return this._guild?.channels.cache.filter(c => c.type === 5).size || 0;
       },
 
       // Thread channels
       get threads() {
-        return this.guild?.channels.cache.filter(c => 
+        return this._guild?.channels.cache.filter(c => 
           c.type === 10 || c.type === 11 || c.type === 12
         ).size || 0;
       },
 
-      guild: this.guild
+      _guild: this._guild
     };
   }
 
@@ -250,47 +250,47 @@ class ServerMetrics {
    * Role Statistics
    */
   get roles() {
-    if (!this.guild) return null;
+    if (!this._guild) return null;
 
     return {
       // Total roles
       get all() {
-        return this.guild?.roles.cache.size || 0;
+        return this._guild?.roles.cache.size || 0;
       },
 
       // Roles with admin
       get admin() {
-        return this.guild?.roles.cache.filter(r => 
+        return this._guild?.roles.cache.filter(r => 
           r.permissions.has('Administrator')
         ).size || 0;
       },
 
       // Mentionable roles
       get mentionable() {
-        return this.guild?.roles.cache.filter(r => r.mentionable).size || 0;
+        return this._guild?.roles.cache.filter(r => r.mentionable).size || 0;
       },
 
       // Hoisted roles (displayed separately)
       get hoisted() {
-        return this.guild?.roles.cache.filter(r => r.hoist).size || 0;
+        return this._guild?.roles.cache.filter(r => r.hoist).size || 0;
       },
 
       // Managed roles (bot roles)
       get managed() {
-        return this.guild?.roles.cache.filter(r => r.managed).size || 0;
+        return this._guild?.roles.cache.filter(r => r.managed).size || 0;
       },
 
       // Highest role
       get highest() {
-        return this.guild?.roles.highest;
+        return this._guild?.roles.highest;
       },
 
       // Lowest role
       get lowest() {
-        return this.guild?.roles.everyone;
+        return this._guild?.roles.everyone;
       },
 
-      guild: this.guild
+      _guild: this._guild
     };
   }
 
@@ -298,37 +298,37 @@ class ServerMetrics {
    * Emoji Statistics
    */
   get emojis() {
-    if (!this.guild) return null;
+    if (!this._guild) return null;
 
     return {
       // Total emojis
       get all() {
-        return this.guild?.emojis.cache.size || 0;
+        return this._guild?.emojis.cache.size || 0;
       },
 
       // Static emojis
       get static() {
-        return this.guild?.emojis.cache.filter(e => !e.animated).size || 0;
+        return this._guild?.emojis.cache.filter(e => !e.animated).size || 0;
       },
 
       // Animated emojis
       get animated() {
-        return this.guild?.emojis.cache.filter(e => e.animated).size || 0;
+        return this._guild?.emojis.cache.filter(e => e.animated).size || 0;
       },
 
       // Managed emojis (from integrations)
       get managed() {
-        return this.guild?.emojis.cache.filter(e => e.managed).size || 0;
+        return this._guild?.emojis.cache.filter(e => e.managed).size || 0;
       },
 
       // Available emojis
       get available() {
-        return this.guild?.emojis.cache.filter(e => e.available).size || 0;
+        return this._guild?.emojis.cache.filter(e => e.available).size || 0;
       },
 
       // Max emoji slots
       get maxSlots() {
-        const tier = this.guild?.premiumTier || 0;
+        const tier = this._guild?.premiumTier || 0;
         return tier === 0 ? 50 : tier === 1 ? 100 : tier === 2 ? 150 : 250;
       },
 
@@ -337,7 +337,7 @@ class ServerMetrics {
         return this.maxSlots - this.all;
       },
 
-      guild: this.guild
+      _guild: this._guild
     };
   }
 
@@ -345,17 +345,17 @@ class ServerMetrics {
    * Sticker Statistics
    */
   get stickers() {
-    if (!this.guild) return null;
+    if (!this._guild) return null;
 
     return {
       // Total stickers
       get all() {
-        return this.guild?.stickers.cache.size || 0;
+        return this._guild?.stickers.cache.size || 0;
       },
 
       // Max sticker slots
       get maxSlots() {
-        const tier = this.guild?.premiumTier || 0;
+        const tier = this._guild?.premiumTier || 0;
         return tier === 0 ? 5 : tier === 1 ? 15 : tier === 2 ? 30 : 60;
       },
 
@@ -364,7 +364,7 @@ class ServerMetrics {
         return this.maxSlots - this.all;
       },
 
-      guild: this.guild
+      _guild: this._guild
     };
   }
 
@@ -372,43 +372,43 @@ class ServerMetrics {
    * Voice Statistics
    */
   get voice() {
-    if (!this.guild) return null;
+    if (!this._guild) return null;
 
     return {
       // Members in voice
       get active() {
-        return this.guild?.members.cache.filter(m => m.voice.channel).size || 0;
+        return this._guild?.members.cache.filter(m => m.voice.channel).size || 0;
       },
 
       // Muted members
       get muted() {
-        return this.guild?.members.cache.filter(m => 
+        return this._guild?.members.cache.filter(m => 
           m.voice.channel && (m.voice.mute || m.voice.selfMute)
         ).size || 0;
       },
 
       // Deafened members
       get deafened() {
-        return this.guild?.members.cache.filter(m => 
+        return this._guild?.members.cache.filter(m => 
           m.voice.channel && (m.voice.deaf || m.voice.selfDeaf)
         ).size || 0;
       },
 
       // Streaming members
       get streaming() {
-        return this.guild?.members.cache.filter(m => 
+        return this._guild?.members.cache.filter(m => 
           m.voice.channel && m.voice.streaming
         ).size || 0;
       },
 
       // Video enabled members
       get video() {
-        return this.guild?.members.cache.filter(m => 
+        return this._guild?.members.cache.filter(m => 
           m.voice.channel && m.voice.selfVideo
         ).size || 0;
       },
 
-      guild: this.guild
+      _guild: this._guild
     };
   }
 
@@ -416,22 +416,22 @@ class ServerMetrics {
    * Boost Statistics
    */
   get boost() {
-    if (!this.guild) return null;
+    if (!this._guild) return null;
 
     return {
       // Current boost level (tier)
       get level() {
-        return this.guild?.premiumTier || 0;
+        return this._guild?.premiumTier || 0;
       },
 
       // Total boost count
       get count() {
-        return this.guild?.premiumSubscriptionCount || 0;
+        return this._guild?.premiumSubscriptionCount || 0;
       },
 
       // Boosters
       get boosters() {
-        return this.guild?.members.cache.filter(m => m.premiumSince).size || 0;
+        return this._guild?.members.cache.filter(m => m.premiumSince).size || 0;
       },
 
       // Boosts needed for next level
@@ -456,7 +456,7 @@ class ServerMetrics {
         return 100;
       },
 
-      guild: this.guild
+      _guild: this._guild
     };
   }
 
@@ -464,13 +464,13 @@ class ServerMetrics {
    * Moderation Statistics
    */
   get moderation() {
-    if (!this.guild) return null;
+    if (!this._guild) return null;
 
     return {
       // Banned users count
       async bans() {
         try {
-          const bans = await this.guild?.bans.fetch();
+          const bans = await this._guild?.bans.fetch();
           return bans?.size || 0;
         } catch {
           return 0;
@@ -479,13 +479,13 @@ class ServerMetrics {
 
       // Members with timeout
       get timedOut() {
-        return this.guild?.members.cache.filter(m => 
+        return this._guild?.members.cache.filter(m => 
           m.communicationDisabledUntilTimestamp && 
           m.communicationDisabledUntilTimestamp > Date.now()
         ).size || 0;
       },
 
-      guild: this.guild
+      _guild: this._guild
     };
   }
 

@@ -13,6 +13,9 @@ class HotReload {
     this.watchers = new Map();
     this.debounceTimers = new Map();
     this.enabled = false;
+    this.reregisterTimer = null;
+    this.lastReregister = 0;
+    this.reregisterCooldown = 3000;
   }
 
   /**
@@ -61,7 +64,7 @@ class HotReload {
         this.debounceTimers.set(debounceKey, setTimeout(() => {
           this.handleFileChange(eventType, fullPath, filename);
           this.debounceTimers.delete(debounceKey);
-        }, 100));
+        }, 300));
       });
 
       this.watchers.set(dirPath, watcher);
@@ -101,32 +104,23 @@ class HotReload {
       const relativePath = path.relative(path.join(this.baseDir, 'commands'), filePath);
       const commandName = path.basename(filePath, '.js');
 
-      // Clear require cache for this file
+      // Convert to file URL for ES modules
       const fileUrl = `file:///${filePath.replace(/\\/g, '/')}`;
-      
-      // Delete from module cache
-      if (require.cache[filePath]) {
-        delete require.cache[filePath];
-      }
 
       // Remove existing command
       if (this.client.commands?.has(commandName)) {
         this.client.commands.delete(commandName);
       }
 
-      // Wait a bit to ensure file is written completely
-      await new Promise(resolve => setTimeout(resolve, 50));
+      // Wait for file to stabilize
+      await this.waitForFileStability(filePath);
 
-      // Re-import the module
+      // Re-import the module with cache-busting query parameter
       try {
         const module = await import(`${fileUrl}?update=${Date.now()}`);
         console.log(`✅ Reloaded: ${relativePath}`);
         
-        // Re-register commands if needed
-        if (this.client.autoRegister && this.client.applicationId) {
-          await this.client.registerCommands();
-          console.log('📡 Commands re-registered with Discord');
-        }
+        this.scheduleReregister();
       } catch (error) {
         console.error(`❌ Error reloading ${relativePath}:`, error.message);
       }
@@ -146,11 +140,8 @@ class HotReload {
         this.client.commands.delete(commandName);
         console.log(`🗑️ Unloaded: ${commandName}`);
         
-        // Re-register to remove from Discord
-        if (this.client.autoRegister && this.client.applicationId) {
-          await this.client.registerCommands();
-          console.log('📡 Commands re-registered with Discord');
-        }
+        // Schedule batch re-register with cooldown
+        this.scheduleReregister();
       }
     } catch (error) {
       console.error('Unload error:', error.message);
@@ -172,6 +163,67 @@ class HotReload {
     this.debounceTimers.clear();
     this.enabled = false;
     console.log('🔥 Hot reload disabled');
+  }
+
+  /**
+   * Wait for file to finish writing
+   */
+  async waitForFileStability(filePath, maxAttempts = 5) {
+    let lastSize = -1;
+    
+    for (let i = 0; i < maxAttempts; i++) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      try {
+        const stats = fs.statSync(filePath);
+        const currentSize = stats.size;
+        
+        if (currentSize === lastSize && currentSize > 0) {
+          return; // File is stable
+        }
+        
+        lastSize = currentSize;
+      } catch (error) {
+        // File doesn't exist yet or error reading
+        if (i === maxAttempts - 1) throw error;
+      }
+    }
+  }
+
+  scheduleReregister() {
+    if (!this.client.autoRegister || !this.client.applicationId) return;
+
+    // Clear existing timer
+    if (this.reregisterTimer) {
+      clearTimeout(this.reregisterTimer);
+    }
+
+    if (this.client.activeInteractions > 0) {
+      console.log(`⏸️  Re-registration paused (${this.client.activeInteractions} active interactions)`);
+      this.reregisterTimer = setTimeout(() => {
+        this.scheduleReregister(); 
+      }, 1000); // 1 second
+      return;
+    }
+
+    // Calculate delay based on cooldown
+    const timeSinceLastReregister = Date.now() - this.lastReregister;
+    const delay = Math.max(0, this.reregisterCooldown - timeSinceLastReregister);
+
+    // Schedule re-register
+    this.reregisterTimer = setTimeout(async () => {
+      try {
+        await this.client.registerCommands();
+        this.lastReregister = Date.now();
+        console.log('📡 Commands re-registered with Discord');
+      } catch (error) {
+        console.error('Failed to re-register commands:', error.message);
+      }
+    }, delay);
+
+    if (delay > 0) {
+      console.log(`⏱️  Re-registration scheduled in ${Math.ceil(delay / 1000)}s`);
+    }
   }
 
   /**

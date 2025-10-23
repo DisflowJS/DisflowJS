@@ -73,9 +73,24 @@ class SlashHandler {
       return;
     }
 
+    this.client.activeInteractions++;
+
     logger.command(interaction.commandName, interaction.user.tag);
 
     try {
+      // Immediately defer to avoid 3s timeout
+      if (!interaction.deferred && !interaction.replied) {
+        try {
+          await interaction.deferReply({ flags: 0 });
+        } catch (e) {
+          if (e?.code === 10062) {
+            logger.warn('⚠️ Interaction already expired before defer');
+            return;
+          }
+          throw e;
+        }
+      }
+
       // Set global context for global API
       setContext(botContext);
       
@@ -91,13 +106,16 @@ class SlashHandler {
       
       try {
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: errorMessage, ephemeral: true });
+          // flags: 64 => ephemeral
+          await interaction.followUp({ content: errorMessage, flags: 64 });
         } else {
-          await interaction.reply({ content: errorMessage, ephemeral: true });
+          await interaction.reply({ content: errorMessage, flags: 64 });
         }
       } catch {
         // Silently fail if we can't send error
       }
+    } finally {
+      this.client.activeInteractions--;
     }
   }
 

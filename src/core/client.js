@@ -31,7 +31,8 @@ class DisflowClient {
     this.baseDir = null;
     this.applicationId = null;
     this.autoRegister = false;
-    this.hotReloadEnabled = true; // Default enabled
+    this.hotReloadEnabled = true;
+    this.activeInteractions = 0;
 
     // Slash command handler
     this.slashHandler = new SlashHandler(this.client);
@@ -158,6 +159,11 @@ class DisflowClient {
             content = normalizeEmbeds(content);
           }
           
+          if (typeof content === 'object' && content.ephemeral === true) {
+            content.flags = 64;
+            delete content.ephemeral;
+          }
+          
           if (interaction.replied) {
             return await interaction.followUp(typeof content === 'string' ? { content } : content);
           }
@@ -187,6 +193,12 @@ class DisflowClient {
        */
       edit: async (content) => {
         try {
+          // Check if interaction is still valid
+          if (!interaction.deferred && !interaction.replied) {
+            console.warn('⚠️ Interaction not deferred/replied yet');
+            return;
+          }
+          
           if (typeof content === 'object' && content.embeds) {
             content = normalizeEmbeds(content);
           }
@@ -196,6 +208,10 @@ class DisflowClient {
           }
           return await interaction.editReply(content);
         } catch (error) {
+          if (error.code === 10062) {
+            console.warn('⚠️ Interaction expired - command may have been reloaded');
+            return;
+          }
           console.error('Edit error:', error.message);
         }
       },
@@ -216,15 +232,36 @@ class DisflowClient {
           }
           return await interaction.update(content);
         } catch (error) {
+          if (error.code === 10062) {
+            console.warn('⚠️ Interaction expired - button may have been reloaded');
+            return;
+          }
           console.error('Update error:', error.message);
         }
       },
       
       defer: async (ephemeral = false) => {
-        return await interaction.deferReply({ ephemeral });
+        try {
+          // Check if interaction is still valid
+          if (interaction.replied || interaction.deferred) {
+            return;
+          }
+          return await interaction.deferReply({ flags: ephemeral ? 64 : 0 });
+        } catch (error) {
+          if (error.code === 10062) {
+            // Interaction expired
+            console.warn('⚠️ Interaction expired - command may have been reloaded');
+          }
+          throw error;
+        }
       },
       
       followUp: async (content) => {
+        if (typeof content === 'object' && content.ephemeral === true) {
+          content.flags = 64;
+          delete content.ephemeral;
+        }
+        
         if (typeof content === 'string') {
           return await interaction.followUp(content);
         }
